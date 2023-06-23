@@ -72,7 +72,7 @@ def download_csv():
             tfidf_output = calculate_tfidf(pdf_content)  # Get the TF-IDF output
 
             # Convert back to dataframe after to_String
-            df = pd.read_csv(pd.compat.StringIO(tfidf_output), sep="\s+")
+            df = pd.read_csv(StringIO(tfidf_output), sep="\s+")
 
             # Save file locally
             save_filepath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("CSV files", "*.csv")])
@@ -84,6 +84,7 @@ def download_csv():
         else:
             tbox.delete('1.0', tk.END)  # Clear the text box
             tbox.insert(tk.END, "ERROR: Selected file is not a valid PDF.")  # Show error message
+
 
 root = TkinterDnD.Tk()
 root.geometry("900x500")
