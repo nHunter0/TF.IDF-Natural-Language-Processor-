@@ -11,26 +11,27 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 doc_contents = {}
 vectorizer = TfidfVectorizer(stop_words='english')
 
-def process_file(filepath):
-    listbox.insert(tk.END, filepath)
-    
-    # Check if the file is a PDF or TXT
-    if os.path.isfile(filepath) and os.path.splitext(filepath)[1] in ['.pdf', '.txt']:
-        print(f"File path: {filepath}")
-        file_content = read_file(filepath)  # Get the file content
-        if file_content is not None:
-            doc_contents[filepath] = file_content  # Store the file content in the dictionary
+def process_files(filepaths):
+    for filepath in filepaths:
+        listbox.insert(tk.END, filepath)
+        
+        # Check if the file is a PDF or TXT
+        if os.path.isfile(filepath) and os.path.splitext(filepath)[1] in ['.pdf', '.txt']:
+            print(f"File path: {filepath}")
+            file_content = read_file(filepath)  # Get the file content
+            if file_content is not None:
+                doc_contents[filepath] = file_content  # Store the file content in the dictionary
+            else:
+                tbox.insert(tk.END, f"{filepath} is not a valid pdf or txt file.")
+                print(f"Error {filepath} is not a valid pdf or txt file.")
         else:
-            tbox.insert(tk.END, f"{filepath} is not a valid pdf or txt file.")
-            print(f"Error {filepath} is not a valid pdf or txt file.")
-    else:
-        tbox.insert(tk.END, f"{filepath} is not a file.")
-        print(f"Error {filepath} is not a file.")
+            tbox.insert(tk.END, f"{filepath} is not a file.")
+            print(f"Error {filepath} is not a file.")
 
 # Function to handle file drop
 def drop(event):
-    filepath = event.data
-    process_file(filepath)
+    filepaths = event.data.split("\n") # not working with multiple drops
+    process_files(filepaths)
 
 def on_select(event):
     # Get the currently selected item in the listbox
@@ -78,8 +79,8 @@ def calculate_tfidf_button_click():
 
 def open_file_dialog():
     filetypes = [("PDF files", "*.pdf"), ("Text files", "*.txt")]
-    filepath = filedialog.askopenfilename(filetypes=filetypes)
-    process_file(filepath)
+    filepaths = filedialog.askopenfilenames(filetypes=filetypes)
+    process_files(filepaths)
 
 def download_csv():
     # Get the currently selected item in the listbox
