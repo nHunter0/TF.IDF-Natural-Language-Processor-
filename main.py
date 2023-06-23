@@ -17,22 +17,25 @@ def process_files(filepaths):
     root.update_idletasks() # force GUI update (due to tk having 1 thread)
 
     for filepath in filepaths:
-        listbox.insert(tk.END, filepath)
-        
-        # Check if the file is a PDF or TXT
-        if os.path.isfile(filepath) and os.path.splitext(filepath)[1] in ['.pdf', '.txt']:
-            print(f"File path: {filepath}")
-            file_content = read_file(filepath)  # Get the file content
-            if file_content is not None:
-                doc_contents[filepath] = file_content  # Store the file content in the dictionary
+        try:
+            listbox.insert(tk.END, filepath)
+            
+            # Check if the file is a PDF or TXT
+            if os.path.isfile(filepath) and os.path.splitext(filepath)[1] in ['.pdf', '.txt']:
+                print(f"File path: {filepath}")
+                file_content = read_file(filepath)  # Get the file content
+                if file_content is not None:
+                    doc_contents[filepath] = file_content  # Store the file content in the dictionary
+                else:
+                    tbox.insert(tk.END, f"{filepath} is not a valid pdf or txt file.")
+                    print(f"Error {filepath} is not a valid pdf or txt file.")
             else:
-                tbox.insert(tk.END, f"{filepath} is not a valid pdf or txt file.")
-                print(f"Error {filepath} is not a valid pdf or txt file.")
-        else:
-            tbox.insert(tk.END, f"{filepath} is not a file.")
-            print(f"Error {filepath} is not a file.")
-        
-        laoding_label.grid_forget() # done loading
+                tbox.insert(tk.END, f"{filepath} is not a file.")
+                print(f"Error {filepath} is not a file.")
+        except Exception as e:
+             tbox.insert(tk.END, f"Failed to process {filepath}. Reason: {str(e)}")
+             print(f"Failed to process {filepath}. Reason: {str(e)}")
+    laoding_label.grid_forget() # done loading
 
 # Function to handle file drop
 def drop(event):
@@ -54,11 +57,7 @@ def on_select(event):
 def calculate_tfidf(corpus):
     # Calculate TF-IDF for the entire corpus
     tfidf_matrix = vectorizer.fit_transform(corpus)
-
-    # We can convert this matrix to a Pandas dataframe to make it easier to work with
     df = pd.DataFrame(tfidf_matrix.toarray(), columns=vectorizer.get_feature_names_out())
-
-    # Return the dataframe
     return df
 
 def calculate_tfidf_button_click():
@@ -68,20 +67,23 @@ def calculate_tfidf_button_click():
         index = selection[0]
         filepath = listbox.get(index)
         
-        # Check if the selected file is a valid PDF
         if filepath in doc_contents:
-            corpus = list(doc_contents.values())  # Get the entire set of documents' content
-            tfidf_df = calculate_tfidf(corpus)  # Get the TF-IDF dataframe for the entire corpus
+            try:
+                corpus = list(doc_contents.values())  # Get the entire set of documents' content
+                tfidf_df = calculate_tfidf(corpus)  # Get the TF-IDF dataframe for the entire corpus
 
-            # Get the TF-IDF for the selected document
-            tfidf_output = tfidf_df.loc[index].to_string()
+                # Get the TF-IDF for the selected document
+                tfidf_output = tfidf_df.loc[index].to_string()
 
-            tbox.delete('1.0', tk.END)  # Clear the text box
-            tbox.insert(tk.END, tfidf_output)  # Insert the TF-IDF output into the text box
+                tbox.delete('1.0', tk.END)  # Clear the text box
+                tbox.insert(tk.END, tfidf_output)  # Insert the TF-IDF output into the text box
+            except Exception as e:
+                tbox.delete('1.0', tk.END)
+                tbox.insert(tk.END, f"Failed to process {filepath}. Reason: {str(e)}")
+                print(f"Failed to process {filepath}. Reason: {str(e)}")
         else:
-            tbox.delete('1.0', tk.END)  # Clear the text box
-            tbox.insert(tk.END, "ERROR: Selected file is not a valid")  # Show error message
-
+            tbox.delete('1.0', tk.END)  
+            tbox.insert(tk.END, "ERROR: Selected file is not a valid")  
 
 def open_file_dialog():
     filetypes = [("PDF files", "*.pdf"), ("Text files", "*.txt")]
@@ -95,7 +97,6 @@ def download_csv():
         index = selection[0]
         filepath = listbox.get(index)
         
-        # Check if the selected file is a valid PDF
         if filepath in doc_contents:
             file_content = doc_contents[filepath]  # Get the previously computed PDF content from the dictionary
             tfidf_output = calculate_tfidf(file_content)  # Get the TF-IDF output
@@ -111,8 +112,8 @@ def download_csv():
             else:
                 print("Error occured when saving file")
         else:
-            tbox.delete('1.0', tk.END)  # Clear the text box
-            tbox.insert(tk.END, "ERROR: Selected file is not a valid.")  # Show error message
+            tbox.delete('1.0', tk.END) 
+            tbox.insert(tk.END, "ERROR: Selected file is not a valid.") 
 
 
 root = TkinterDnD.Tk()
