@@ -12,6 +12,10 @@ doc_contents = {}
 vectorizer = TfidfVectorizer(stop_words='english')
 
 def process_files(filepaths):
+    laoding_label = tk.Label(root, text="Loading...")
+    laoding_label.grid(row=0,column=0)
+    root.update_idletasks() # force GUI update (due to tk having 1 thread)
+
     for filepath in filepaths:
         listbox.insert(tk.END, filepath)
         
@@ -27,6 +31,8 @@ def process_files(filepaths):
         else:
             tbox.insert(tk.END, f"{filepath} is not a file.")
             print(f"Error {filepath} is not a file.")
+        
+        laoding_label.grid_forget() # done loading
 
 # Function to handle file drop
 def drop(event):
@@ -79,7 +85,7 @@ def calculate_tfidf_button_click():
 
 def open_file_dialog():
     filetypes = [("PDF files", "*.pdf"), ("Text files", "*.txt")]
-    filepaths = filedialog.askopenfilenames(filetypes=filetypes)
+    filepaths = filedialog.askopenfilenames(filetypes=filetypes, multiple=True)
     process_files(filepaths)
 
 def download_csv():
