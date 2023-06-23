@@ -5,9 +5,11 @@ from io import StringIO
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from tkinter import filedialog
 from tfidf_calculator import read_file, calculate_tfidf  # importing the function from tfidf_calculator.py
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Dictionary to store file paths and their corresponding PDF contents
-pdf_contents = {}
+doc_contents = {}
+vectorizer = TfidfVectorizer(stop_words='english')
 
 def process_file(filepath):
     listbox.insert(tk.END, filepath)
@@ -17,7 +19,7 @@ def process_file(filepath):
         print(f"File path: {filepath}")
         file_content = read_file(filepath)  # Get the file content
         if file_content is not None:
-            pdf_contents[filepath] = file_content  # Store the file content in the dictionary
+            doc_contents[filepath] = file_content  # Store the file content in the dictionary
         else:
             tbox.insert(tk.END, f"{filepath} is not a valid pdf or txt file.")
             print(f"Error {filepath} is not a valid pdf or txt file.")
@@ -37,10 +39,20 @@ def on_select(event):
     if selection:
         index = selection[0]
         filepath = event.widget.get(index)
-        if filepath in pdf_contents:
-            pdf_content = pdf_contents[filepath]  # Get the previously computed PDF content from the dictionary
+        if filepath in doc_contents:
+            file_content = doc_contents[filepath]  # Get the previously computed PDF content from the dictionary
             tbox.delete('1.0', tk.END)  # Clear the text box
-            tbox.insert(tk.END, pdf_content)  # Insert the PDF content into the text box
+            tbox.insert(tk.END, file_content)  # Insert the PDF content into the text box
+
+def calculate_tfidf(corpus):
+    # Calculate TF-IDF for the entire corpus
+    tfidf_matrix = vectorizer.fit_transform(corpus)
+
+    # We can convert this matrix to a Pandas dataframe to make it easier to work with
+    df = pd.DataFrame(tfidf_matrix.toarray(), columns=vectorizer.get_feature_names_out())
+
+    # Return the dataframe
+    return df
 
 def calculate_tfidf_button_click():
     # Get the currently selected item in the listbox
@@ -50,14 +62,19 @@ def calculate_tfidf_button_click():
         filepath = listbox.get(index)
         
         # Check if the selected file is a valid PDF
-        if filepath in pdf_contents:
-            pdf_content = pdf_contents[filepath]  # Get the previously computed PDF content from the dictionary
-            tfidf_output = calculate_tfidf(pdf_content)  # Get the TF-IDF output
+        if filepath in doc_contents:
+            corpus = list(doc_contents.values())  # Get the entire set of documents' content
+            tfidf_df = calculate_tfidf(corpus)  # Get the TF-IDF dataframe for the entire corpus
+
+            # Get the TF-IDF for the selected document
+            tfidf_output = tfidf_df.loc[index].to_string()
+
             tbox.delete('1.0', tk.END)  # Clear the text box
             tbox.insert(tk.END, tfidf_output)  # Insert the TF-IDF output into the text box
         else:
             tbox.delete('1.0', tk.END)  # Clear the text box
-            tbox.insert(tk.END, "ERROR: Selected file is not a valid PDF.")  # Show error message
+            tbox.insert(tk.END, "ERROR: Selected file is not a valid")  # Show error message
+
 
 def open_file_dialog():
     filetypes = [("PDF files", "*.pdf"), ("Text files", "*.txt")]
@@ -72,9 +89,9 @@ def download_csv():
         filepath = listbox.get(index)
         
         # Check if the selected file is a valid PDF
-        if filepath in pdf_contents:
-            pdf_content = pdf_contents[filepath]  # Get the previously computed PDF content from the dictionary
-            tfidf_output = calculate_tfidf(pdf_content)  # Get the TF-IDF output
+        if filepath in doc_contents:
+            file_content = doc_contents[filepath]  # Get the previously computed PDF content from the dictionary
+            tfidf_output = calculate_tfidf(file_content)  # Get the TF-IDF output
 
             # Convert back to dataframe after to_String
             df = pd.read_csv(StringIO(tfidf_output), sep="\s+")
@@ -88,7 +105,7 @@ def download_csv():
                 print("Error occured when saving file")
         else:
             tbox.delete('1.0', tk.END)  # Clear the text box
-            tbox.insert(tk.END, "ERROR: Selected file is not a valid PDF.")  # Show error message
+            tbox.insert(tk.END, "ERROR: Selected file is not a valid.")  # Show error message
 
 
 root = TkinterDnD.Tk()
