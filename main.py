@@ -4,27 +4,31 @@ import pandas as pd
 from io import StringIO
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from tkinter import filedialog
-from tfidf_calculator import read_pdf, calculate_tfidf  # importing the function from tfidf_calculator.py
+from tfidf_calculator import read_file, calculate_tfidf  # importing the function from tfidf_calculator.py
 
 # Dictionary to store file paths and their corresponding PDF contents
 pdf_contents = {}
+
+def process_file(filepath):
+    listbox.insert(tk.END, filepath)
+    
+    # Check if the file is a PDF or TXT
+    if os.path.isfile(filepath) and os.path.splitext(filepath)[1] in ['.pdf', '.txt']:
+        print(f"File path: {filepath}")
+        file_content = read_file(filepath)  # Get the file content
+        if file_content is not None:
+            pdf_contents[filepath] = file_content  # Store the file content in the dictionary
+        else:
+            tbox.insert(tk.END, f"{filepath} is not a valid pdf or txt file.")
+            print(f"Error {filepath} is not a valid pdf or txt file.")
+    else:
+        tbox.insert(tk.END, f"{filepath} is not a file.")
+        print(f"Error {filepath} is not a file.")
 
 # Function to handle file drop
 def drop(event):
     filepath = event.data
     process_file(filepath)
-
-def process_file(filepath):
-    listbox.insert(tk.END, filepath)
-    
-    # Check if the file is a PDF
-    if os.path.isfile(filepath) and os.path.splitext(filepath)[1] == '.pdf':
-        print(f"File path: {filepath}")
-        pdf_content = read_pdf(filepath)  # Get the PDF content
-        pdf_contents[filepath] = pdf_content  # Store the PDF content in the dictionary
-    else:
-        tbox.insert(tk.END, f"{filepath} is not a pdf.")
-        print(f"Error {filepath} is not a file.")
 
 def on_select(event):
     # Get the currently selected item in the listbox
@@ -56,7 +60,8 @@ def calculate_tfidf_button_click():
             tbox.insert(tk.END, "ERROR: Selected file is not a valid PDF.")  # Show error message
 
 def open_file_dialog():
-    filepath = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
+    filetypes = [("PDF files", "*.pdf"), ("Text files", "*.txt")]
+    filepath = filedialog.askopenfilename(filetypes=filetypes)
     process_file(filepath)
 
 def download_csv():
@@ -88,6 +93,7 @@ def download_csv():
 
 root = TkinterDnD.Tk()
 root.geometry("900x500")
+root.title("TFIDF Calculator")
 
 # Listbox Scroll Bar 
 lb_scrollbar = tk.Scrollbar(root, orient=tk.HORIZONTAL)

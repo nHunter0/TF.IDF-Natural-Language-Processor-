@@ -1,4 +1,6 @@
+import os
 import PyPDF2
+
 import nltk
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
@@ -7,16 +9,27 @@ import pandas as pd
 nltk.download('punkt')
 nltk.download('stopwords')
 
-def read_pdf(filepath):
-    # Open and read the PDF
-    pdf_content = ""
-    with open(filepath, 'rb') as pdf_file:
-        pdf_reader = PyPDF2.PdfFileReader(pdf_file)
-        num_pages = pdf_reader.numPages
-        for page in range(num_pages):
-            page_content = pdf_reader.getPage(page).extractText()
-            pdf_content += page_content
-    return pdf_content
+def read_file(filepath):
+    # Check the file extension
+    _, file_extension = os.path.splitext(filepath)
+
+    if file_extension == ".pdf":
+        # Open and read the PDF
+        file_content = ""
+        with open(filepath, 'rb') as file:
+            pdf_reader = PyPDF2.PdfFileReader(file)
+            num_pages = pdf_reader.numPages
+            for page in range(num_pages):
+                page_content = pdf_reader.getPage(page).extractText()
+                file_content += page_content
+    elif file_extension == ".txt":
+        # Open and read the text file
+        with open(filepath, 'r') as file:
+            file_content = file.read()
+    else:
+        file_content = None
+
+    return file_content
 
 def calculate_tfidf(pdf_content):
     # Calculate TF-IDF
